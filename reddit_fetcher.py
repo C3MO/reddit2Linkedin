@@ -10,7 +10,6 @@ import webbrowser
 from dotenv import load_dotenv, set_key, find_dotenv
 from oauth_server import start_oauth_server
 
-# Load environment variables
 load_dotenv()
 
 def get_linkedin_access_token():
@@ -121,7 +120,6 @@ def get_linkedin_access_token():
             print(f"Error: No access token in response: {token_data}")
             return None
         
-        # Save tokens to .env
         env_path = find_dotenv()
         set_key(env_path, 'LINKEDIN_ACCESS_TOKEN', access_token)
         if refresh_token:
@@ -137,8 +135,56 @@ def get_linkedin_access_token():
         print(f"Unexpected error during token exchange: {e}")
         return None
 
+def get_linkedin_profile(access_token):
+    """Get LinkedIn profile information to verify Person URN"""
+    api_url = "https://api.linkedin.com/v2/people/~"
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+    
+    try:
+        response = requests.get(api_url, headers=headers)
+        if response.status_code == 200:
+            profile_data = response.json()
+            person_id = profile_data.get('id')
+            if person_id:
+                print(f"Your LinkedIn Person ID: {person_id}")
+                print(f"Correct Person URN: urn:li:person:{person_id}")
+                
+                # Save the correct URN to .env
+                env_path = find_dotenv()
+                set_key(env_path, 'LINKEDIN_PERSON_URN', f"urn:li:person:{person_id}")
+                
+                return f"urn:li:person:{person_id}"
+            else:
+                print("Could not get person ID from profile")
+                return None
+        else:
+            print(f"Failed to get profile: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        print(f"Error getting LinkedIn profile: {e}")
+        return None
+
 def post_to_linkedin(title, url, access_token):
     """Post to LinkedIn using the API"""
+    # First, get the correct Person URN
+    correct_urn = get_linkedin_profile(access_token)
+    if not correct_urn:
+        # Fall back to the URN from .env, but fix the format
+        person_urn = os.getenv('LINKEDIN_PERSON_URN')
+        if person_urn and person_urn.startswith('urn:li:person:'):
+            correct_urn = person_urn
+        else:
+            correct_urn = f"urn:li:person:{person_urn}" if person_urn else None
+    
+    if not correct_urn:
+        print("Error: Could not determine LinkedIn Person URN")
+        return
+    
+    print(f"Using Person URN: {correct_urn}")
+    
     api_url = "https://api.linkedin.com/v2/ugcPosts"
     headers = {
         'Authorization': f'Bearer {access_token}',
@@ -147,7 +193,7 @@ def post_to_linkedin(title, url, access_token):
     }
     
     payload = {
-        "author": f"urn:li:person:{os.getenv('LINKEDIN_PERSON_URN')}",
+        "author": correct_urn,
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
@@ -168,8 +214,9 @@ def post_to_linkedin(title, url, access_token):
         },
         "visibility": {
             "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-        }
-    }
+        }    }
+    
+    print(f"Payload author field: {payload['author']}")
     
     response = requests.post(api_url, headers=headers, json=payload)
     if response.status_code == 201:
@@ -223,6 +270,38 @@ def fetch_reddit_posts():
     
     except Exception as e:
         print(f"Error: {str(e)}")
+
+def get_linkedin_profile(access_token):
+    """Get LinkedIn profile information to verify Person URN"""
+    api_url = "https://api.linkedin.com/v2/people/~"
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+    
+    try:
+        response = requests.get(api_url, headers=headers)
+        if response.status_code == 200:
+            profile_data = response.json()
+            person_id = profile_data.get('id')
+            if person_id:
+                print(f"Your LinkedIn Person ID: {person_id}")
+                print(f"Correct Person URN: urn:li:person:{person_id}")
+                
+                # Save the correct URN to .env
+                env_path = find_dotenv()
+                set_key(env_path, 'LINKEDIN_PERSON_URN', f"urn:li:person:{person_id}")
+                
+                return f"urn:li:person:{person_id}"
+            else:
+                print("Could not get person ID from profile")
+                return None
+        else:
+            print(f"Failed to get profile: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        print(f"Error getting LinkedIn profile: {e}")
+        return None
 
 if __name__ == "__main__":
     fetch_reddit_posts()
