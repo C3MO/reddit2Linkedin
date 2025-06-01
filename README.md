@@ -1,8 +1,17 @@
 # Reddit to LinkedIn Bot
 
-This bot fetches posts from r/technews and posts them to your LinkedIn profile.
+This bot fetches posts from r/technews and automatically posts them to your LinkedIn profile every 3 hours, with duplicate detection.
 
-## Setup Instructions
+## 🚀 Features
+
+- ✅ Fetches posts from r/technews
+- ✅ Posts to LinkedIn every 3 hours automatically
+- ✅ Duplicate post detection
+- ✅ Tracks posting history
+- ✅ Prioritizes posts by score (popularity)
+- ✅ Simple management interface
+
+## 📋 Setup Instructions
 
 ### 1. LinkedIn App Configuration
 
@@ -37,26 +46,102 @@ For out-of-band flow:
 LINKEDIN_REDIRECT_URI=urn:ietf:wg:oauth:2.0:oob
 ```
 
-### 3. Test Authentication
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Test Authentication
 
 Run the test script to verify your setup:
 ```bash
 python test_linkedin_auth.py
 ```
 
-This will:
-- Check your environment variables
-- Test the OAuth flow
-- Verify you can get an access token
+## 🎯 Usage
 
-### 4. Run the Main Application
+### Basic Commands
 
-Once authentication is working:
+**Fetch new posts from Reddit:**
 ```bash
-python reddit_fetcher.py
+python reddit_fetcher.py fetch
 ```
 
-## Troubleshooting
+**Post a single post immediately:**
+```bash
+python reddit_fetcher.py post
+```
+
+**Start automated posting (every 3 hours):**
+```bash
+python reddit_fetcher.py schedule
+```
+
+**Manage bot status and history:**
+```bash
+python bot_manager.py
+```
+
+### Automated Posting
+
+The bot will:
+1. Check for unposted content
+2. Select the highest-scoring unposted article
+3. Post it to LinkedIn
+4. Mark it as posted to prevent duplicates
+5. Wait 3 hours and repeat
+
+To start automated posting:
+```bash
+python reddit_fetcher.py schedule
+```
+
+You'll be asked to choose between:
+1. **Advanced scheduler** (requires `pip install schedule`) - More precise timing
+2. **Simple time loop** (no dependencies) - Basic 3-hour intervals
+
+## 📊 Bot Management
+
+Use the bot manager for easy status tracking:
+
+```bash
+python bot_manager.py
+```
+
+This provides:
+- ✅ Current status overview
+- 📝 Next posts to be shared
+- 🔄 Reset posting history
+- 📈 Statistics
+
+## 📁 Files Overview
+
+- `reddit_fetcher.py` - Main application
+- `oauth_server.py` - Local OAuth callback server
+- `test_linkedin_auth.py` - Authentication test script
+- `bot_manager.py` - Bot status and management
+- `technews_posts.json` - Fetched Reddit posts
+- `posted_history.json` - Tracking of posted content
+- `.env` - Environment variables (keep this file private!)
+
+## 🔄 How Duplicate Detection Works
+
+The bot maintains a `posted_history.json` file that tracks:
+- ✅ Post IDs that have been shared
+- 🕐 Timestamp of last posting
+- 📊 Posting statistics
+
+Each post has a unique Reddit ID, so the same article will never be posted twice.
+
+## ⚙️ Posting Logic
+
+1. **Priority**: Posts are sorted by Reddit score (upvotes - downvotes)
+2. **Filtering**: Only posts from the last 24 hours are considered
+3. **Deduplication**: Already posted content is skipped
+4. **Scheduling**: Posts every 3 hours automatically
+
+## 🛠️ Troubleshooting
 
 ### Redirect URI Issues
 
@@ -67,40 +152,27 @@ python reddit_fetcher.py
 2. Check for extra spaces or typos
 3. Use `http://localhost:8080/callback` (recommended) or `urn:ietf:wg:oauth:2.0:oob`
 
-### Port Already in Use
+### No Posts to Share
 
-**Problem**: "Port 8080 is already in use"
-
-**Solution**: 
-1. Change the port in your redirect URI (e.g., `http://localhost:8081/callback`)
-2. Update both your `.env` file and LinkedIn app settings
-
-### Browser Doesn't Open
-
-**Problem**: Browser doesn't open automatically
+**Problem**: "No new posts to share"
 
 **Solution**: 
-1. Copy and paste the URL manually
-2. The OAuth server will still capture the callback
+1. Run `python reddit_fetcher.py fetch` to get new posts
+2. Check `python bot_manager.py` for status
+3. Consider resetting history if needed
 
-### Out-of-Band Flow Not Working
+### LinkedIn API Errors
 
-**Problem**: OOB flow shows errors
+**Problem**: 422 error or posting failures
 
 **Solution**: 
-1. Switch to localhost redirect URI method
-2. Update your LinkedIn app redirect URI to `http://localhost:8080/callback`
-3. Update your `.env` file accordingly
+1. Check your LinkedIn Person URN format
+2. Verify your access token is valid
+3. Run `python test_linkedin_auth.py` to refresh tokens
 
-## Files Overview
-
-- `reddit_fetcher.py` - Main application
-- `oauth_server.py` - Local OAuth callback server
-- `test_linkedin_auth.py` - Authentication test script
-- `.env` - Environment variables (keep this file private!)
-
-## Security Notes
+## 🔒 Security Notes
 
 - Keep your `.env` file private and never commit it to version control
 - Your access tokens are stored in the `.env` file
 - The OAuth server only runs temporarily during authentication
+- Posted history is stored locally in JSON format
