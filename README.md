@@ -1,12 +1,13 @@
 # Reddit to LinkedIn Bot
 
-This bot fetches posts from r/technews and automatically posts them to your LinkedIn profile every 3 hours, with duplicate detection.
+This bot fetches posts from r/technews and automatically posts them to your LinkedIn profile every hour, with duplicate detection and automatic refetching.
 
 ## 🚀 Features
 
 - ✅ Fetches posts from r/technews
-- ✅ Posts to LinkedIn every 3 hours automatically
+- ✅ Posts to LinkedIn every hour automatically
 - ✅ Duplicate post detection
+- ✅ Automatically fetches new posts when current list is finished
 - ✅ Tracks posting history
 - ✅ Prioritizes posts by score (popularity)
 - ✅ Simple management interface
@@ -73,7 +74,7 @@ python reddit_fetcher.py fetch
 python reddit_fetcher.py post
 ```
 
-**Start automated posting (every 3 hours):**
+**Start automated posting (every hour):**
 ```bash
 python reddit_fetcher.py schedule
 ```
@@ -90,7 +91,8 @@ The bot will:
 2. Select the highest-scoring unposted article
 3. Post it to LinkedIn
 4. Mark it as posted to prevent duplicates
-5. Wait 3 hours and repeat
+5. Wait 1 hour and repeat
+6. Automatically fetch new posts when current list is exhausted
 
 To start automated posting:
 ```bash
@@ -99,7 +101,7 @@ python reddit_fetcher.py schedule
 
 You'll be asked to choose between:
 1. **Advanced scheduler** (requires `pip install schedule`) - More precise timing
-2. **Simple time loop** (no dependencies) - Basic 3-hour intervals
+2. **Simple time loop** (no dependencies) - Basic 1-hour intervals
 
 ## 📊 Bot Management
 
@@ -139,7 +141,8 @@ Each post has a unique Reddit ID, so the same article will never be posted twice
 1. **Priority**: Posts are sorted by Reddit score (upvotes - downvotes)
 2. **Filtering**: Only posts from the last 24 hours are considered
 3. **Deduplication**: Already posted content is skipped
-4. **Scheduling**: Posts every 3 hours automatically
+4. **Scheduling**: Posts every hour automatically
+5. **Auto-refresh**: Fetches new posts when current list is finished
 
 ## 🛠️ Troubleshooting
 

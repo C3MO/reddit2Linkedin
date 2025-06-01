@@ -343,7 +343,17 @@ def scheduled_post():
     post, history = get_next_post_to_share()
     
     if not post:
-        return
+        print("No unposted content available. Fetching new posts from Reddit...")
+        try:
+            fetch_reddit_posts()
+            print("Successfully fetched new posts. Trying again...")
+            post, history = get_next_post_to_share()
+            if not post:
+                print("Still no posts available after fetching. Will try again next cycle.")
+                return
+        except Exception as e:
+            print(f"Failed to fetch new posts: {e}")
+            return
     
     # Get access token
     access_token = os.getenv('LINKEDIN_ACCESS_TOKEN')
@@ -377,8 +387,8 @@ def run_scheduler():
     print("Posts will be shared every 3 hours")
     print("Press Ctrl+C to stop the scheduler\n")
     
-    # Schedule the job every 3 hours
-    schedule.every(3).hours.do(scheduled_post)
+    # Schedule the job every 1 hour
+    schedule.every(1).hours.do(scheduled_post)
     
     # Also post immediately if there are unposted posts
     print("Checking for immediate post...")
@@ -394,7 +404,7 @@ def run_scheduler():
 def manual_posting_loop():
     """Simple manual posting loop without external dependencies"""
     print("Starting simple posting loop...")
-    print("Posts will be shared every 3 hours")
+    print("Posts will be shared every 1 hour")
     print("Press Ctrl+C to stop\n")
     
     # Post immediately if there are unposted posts
@@ -403,8 +413,8 @@ def manual_posting_loop():
     
     try:
         while True:
-            print(f"Sleeping for 3 hours... (next post at {(datetime.utcnow() + timedelta(hours=3)).strftime('%H:%M:%S')})")
-            time.sleep(3 * 60 * 60)  # Sleep for 3 hours
+            print(f"Sleeping for 1 hour... (next post at {(datetime.utcnow() + timedelta(hours=1)).strftime('%H:%M:%S')})")
+            time.sleep(1 * 60 * 60)  # Sleep for 1 hour
             scheduled_post()
     except KeyboardInterrupt:
         print("\nPosting loop stopped by user")
@@ -423,8 +433,7 @@ def start_posting_bot():
         print("No posts found. Fetching posts first...")
         fetch_reddit_posts()
         return
-    
-    # Check posted history
+      # Check posted history
     history = load_posted_history()
     posted_count = len(history.get("posted_ids", []))
     remaining_posts = len([p for p in posts if not is_post_already_posted(p['id'], history)])
@@ -433,8 +442,8 @@ def start_posting_bot():
     print(f"Remaining to post: {remaining_posts}")
     
     if remaining_posts == 0:
-        print("\nAll posts have been shared! Fetch new posts with fetch_reddit_posts()")
-        return
+        print("\nAll current posts have been shared!")
+        print("The bot will automatically fetch new posts when needed.")
     
     # Ask user which method to use
     print("\nChoose posting method:")
