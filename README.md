@@ -179,3 +179,7 @@ Each post has a unique Reddit ID, so the same article will never be posted twice
 - Your access tokens are stored in the `.env` file
 - The OAuth server only runs temporarily during authentication
 - Posted history is stored locally in JSON format
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
